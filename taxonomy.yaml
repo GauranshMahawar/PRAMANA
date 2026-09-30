@@ -1,0 +1,247 @@
+# PRAMANA attack-class taxonomy  --  G5, the generated coverage object
+#
+# THIS FILE IS A BUILD GATE.
+# Every class enumerated here MUST receive a disposition in every assurance report.
+# A class with no disposition fails the build (pramana/coverage/generator.py).
+# That is the point: "our coverage statement is generated, not written -- if we
+# forgot an attack class, our build breaks."
+#
+# disposition:
+#   assessed              - a named mechanism produces evidence for this class
+#   declared_unsupported  - deliberately not built; `reason` REQUIRED
+#   not_assessed          - in scope but unavailable in THIS run (e.g. access tier).
+#                           Never set here; emitted per assessment with a reason.
+#
+# attribution_ceiling values come from technical doc 30.5.1 and may NOT be exceeded
+# by any finding, field or slide.
+
+schema_version: "1.0"
+generation: 7
+
+classes:
+
+  # ---------- clause 2.2.1  training-data integrity ----------
+  - id: trigger_injection_patch
+    title: "Patch / blend trigger injected into a contributed shard"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.trigger_score, C3b.reversal, C3a.ladder]
+    attribution_ceiling: causal_verified
+    note: "The only class that reaches the top of the evidence ladder. Costs 6-10 retrains at T3."
+
+  - id: label_flipping
+    title: "Label flipping within a contributed shard"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.label_consistency]
+    attribution_ceiling: statistically_attributed
+    note: "Distributional, not triggered. Lot named under declared FDR; no sample-level cause exhibited."
+
+  - id: systematic_mislabelling
+    title: "Systematic per-class mislabelling by one annotation contributor"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.label_consistency, C9.contributor_concentration]
+    attribution_ceiling: statistically_attributed
+    note: >
+      Same mechanism as label_flipping, different intent. Also the technical substrate of
+      annotation bias -- see experiments/e13_bias_transfer.py. The fairness reading is
+      AMBER: mechanism reuse, not a measured result, and it has a pre-registered falsifier.
+
+  - id: near_duplicate_flooding
+    title: "Near-duplicate flooding to shift the corpus mode"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.duplicate_flood]
+    attribution_ceiling: statistically_attributed
+    note: >
+      Cap worsened by our own partition_purity rule, which assigns cross-lot near-duplicates
+      to a single shard -- source resolution traded for a sound partition.
+
+  - id: ood_insertion
+    title: "Out-of-distribution material inserted into a shard"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.ood_mahalanobis]
+    attribution_ceiling: statistically_attributed
+    requires_assumption: backbone_corpus_disjoint_from_assessed_shards
+    note: "Refuses with backbone_corpus_contaminated if the reference overlaps the shards."
+
+  - id: clean_label_poison
+    title: "Clean-label poisoning (correct label, sub-visual perturbation)"
+    clause: "2.2.1"
+    disposition: assessed
+    mechanisms: [C2p.latent_cluster]
+    attribution_ceiling: statistically_attributed
+    note: "Nothing to reverse. Ranking only; the report says so."
+
+  # ---------- clause 2.2.2  model integrity ----------
+  - id: backdoor_fp32_static
+    title: "Backdoor present and active at FP32"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C3b.reversal, C3d.activation_stats, C3a.ladder]
+    attribution_ceiling: causal_verified
+
+  - id: quantisation_conditioned_backdoor
+    title: "Quantisation-conditioned backdoor (dormant at FP32, armed by INT8 conversion)"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C3a.ladder, C3bp.surrogate_reversal]
+    attribution_ceiling: set_valued
+    adversary: A8
+    note: >
+      Divergence at a rung is a property of weights x converter x calibration set, and the
+      three are not separable from the artefact alone. D1 says the trigger is armed by the
+      conversion; it does not say who armed it.
+
+  - id: malicious_converter
+    title: "Malicious or undisclosed conversion toolchain"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C3a.converter_provenance]
+    attribution_ceiling: causal_verified_if_signed
+    adversary: A8
+    note: "causal_verified ONLY if the conversion is a signed contribution; else unattributable."
+
+  - id: malicious_calibration_set
+    title: "Shaped post-training-quantisation calibration set"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C3a.calibration_digest]
+    attribution_ceiling: causal_verified_if_signed
+    adversary: A9
+    note: "PTQ has two inputs and only the weights are normally contracted for."
+
+  - id: model_substitution
+    title: "Model substituted after certification"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C1.digest_verify, C3a.ladder]
+    attribution_ceiling: causal_verified
+
+  - id: trigger_warping
+    title: "Warping-based triggers (WaNet family)"
+    clause: "2.2.2"
+    disposition: declared_unsupported
+    reason: "Reversal parameterisation does not cover warping fields at T1."
+    attribution_ceiling: unattributable
+
+  - id: trigger_input_aware
+    title: "Input-aware / dynamic triggers"
+    clause: "2.2.2"
+    disposition: declared_unsupported
+    reason: "Per-class minimal-perturbation solve assumes a static trigger."
+    attribution_ceiling: unattributable
+
+  - id: reversal_detection_head
+    title: "Per-class reversal on detection heads"
+    clause: "2.2.2"
+    disposition: declared_unsupported
+    reason: >
+      Reversal is specified for classification logits. Replaced by the amplitude-sweep
+      appearance/disappearance rate.
+    attribution_ceiling: unattributable
+
+  - id: architectural_backdoor
+    title: "Architectural or weight-only backdoor (no poisoned data)"
+    clause: "2.2.2"
+    disposition: assessed
+    mechanisms: [C3a.ladder, C3d.activation_stats]
+    attribution_ceiling: unattributable
+    note: >
+      Detection partially possible; attribution undefined (no_data_locus). The data partition
+      carries no information about a change made in the architecture or the weights.
+
+  - id: undetectable_by_construction
+    title: "Backdoor planted to be undetectable by any efficient black-box test"
+    clause: "2.2.2"
+    disposition: declared_unsupported
+    reason: >
+      Out of scope BY THEOREM, not by engineering gap. Goldwasser, Kim, Vaikuntanathan and
+      Zamir (arXiv:2204.06974) construct backdoors no efficient black-box behavioural test
+      detects. Detection is the precondition for attribution.
+    attribution_ceiling: unattributable
+    adversary: A10
+    permanent: true
+
+  # ---------- clause 2.2.3  inference provenance ----------
+  - id: receipt_replay
+    title: "Replay of a previously valid inference record"
+    clause: "2.2.3"
+    disposition: assessed
+    mechanisms: [C6.nonce, C6.sequence_counter, C6.chain_position]
+    attribution_ceiling: causal_verified
+
+  - id: receipt_alteration
+    title: "Post-hoc alteration or substitution of an inference record"
+    clause: "2.2.3"
+    disposition: assessed
+    mechanisms: [C6.signature, C1.hash_chain, C1.external_anchor]
+    attribution_ceiling: causal_verified
+
+  # ---------- clause 2.2.4  distribution shift ----------
+  - id: drift_illumination
+    title: "Illumination shift"
+    clause: "2.2.4"
+    disposition: assessed
+    mechanisms: [C9.discriminators]
+    drift_realism: measured
+
+  - id: drift_sensor
+    title: "Sensor change"
+    clause: "2.2.4"
+    disposition: assessed
+    mechanisms: [C9.discriminators]
+    drift_realism: corruption_model_proxy
+    note: "Blur, noise and compression are MODELS of a sensor swap, not captures across one."
+
+  - id: drift_acquisition
+    title: "Acquisition-condition change"
+    clause: "2.2.4"
+    disposition: assessed
+    mechanisms: [C9.discriminators]
+    drift_realism: corruption_model_proxy
+
+  - id: drift_terrain
+    title: "Terrain change"
+    clause: "2.2.4"
+    disposition: declared_unsupported
+    reason: >
+      no_defence_domain_corpus -- a street-sign benchmark has no terrain axis. xView/DOTA was
+      cut rather than claimed.
+
+  - id: drift_season
+    title: "Seasonal change"
+    clause: "2.2.4"
+    disposition: declared_unsupported
+    reason: "no_defence_domain_corpus -- see drift_terrain."
+
+  # ---------- out of scope, declared ----------
+  - id: network_in_transit
+    title: "Artefact altered in transit"
+    clause: "-"
+    disposition: declared_unsupported
+    reason: "out_of_scope: solved by signing. PRAMANA consumes signatures as substrate."
+    adversary: A6
+
+  - id: certifier_insider
+    title: "Full insider at the certifying authority"
+    clause: "-"
+    disposition: declared_unsupported
+    reason: >
+      out_of_scope: organisational. The external anchor (RFC 3161 / transparency log) makes
+      retroactive alteration detectable to a third party; it does not name the operator.
+    adversary: A7
+
+  - id: contributor_key_compromise
+    title: "Contributor signing-key compromise"
+    clause: "-"
+    disposition: declared_unsupported
+    reason: "out_of_scope: key_compromise is a PKI problem, not a behavioural one."
+
+  - id: federated_encrypted_contribution
+    title: "Federated or encrypted contributions"
+    clause: "-"
+    disposition: declared_unsupported
+    reason: "out_of_scope: no_raw_data_access. PRAMANA assumes delivered shards."

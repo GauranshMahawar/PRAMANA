@@ -1,0 +1,18 @@
+# Render Blueprint: New -> Blueprint -> pick this repository.
+services:
+  - type: web
+    name: pramana-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/live/health
+    autoDeploy: true
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://pramana-f0eb7.web.app,https://pramana-f0eb7.firebaseapp.com
+      - key: PRAMANA_ACCESS_CODE
+        sync: false          # you type it in the Render dashboard; never committed
+      - key: PRAMANA_SIGNING_SEED
+        generateValue: true  # Render generates a random secret once
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false          # paste the service-account JSON in the dashboard

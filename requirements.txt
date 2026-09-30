@@ -1,0 +1,12 @@
+# torch is installed separately in the Dockerfile from the CPU-only index (no CUDA:
+# ~200 MB instead of ~2.5 GB). It is pinned to the version the 64-model null was
+# fitted under, because a different torch is a different INT8 converter.
+numpy==1.26.4
+pydantic==2.13.5
+PyYAML==6.0.3
+cryptography==49.0.0
+fastapi==0.141.1
+uvicorn==0.54.0
+python-multipart==0.0.32
+Pillow==12.3.0
+firebase-admin==7.7.0
