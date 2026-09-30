@@ -46,7 +46,7 @@ MAX_QUEUE = 4
 ACCESS_CODE = os.environ.get("PRAMANA_ACCESS_CODE", "").strip()
 ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS",
-    "https://pramana-f0eb7.web.app,https://pramana-f0eb7.firebaseapp.com,http://localhost:3100,http://127.0.0.1:3100",
+    "https://pramana-live.web.app,https://pramana-live.firebaseapp.com,https://pramana-f0eb7.web.app,https://pramana-f0eb7.firebaseapp.com,http://localhost:3100,http://127.0.0.1:3100",
 ).split(",") if o.strip()]
 _seed = os.environ.get("PRAMANA_SIGNING_SEED", "local-development-only-not-a-secret")
 SIGNER = Signer.from_seed("assurance-cell-live", hashlib.sha256(_seed.encode()).digest())

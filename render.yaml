@@ -9,7 +9,7 @@ services:
     autoDeploy: true
     envVars:
       - key: ALLOWED_ORIGINS
-        value: https://pramana-f0eb7.web.app,https://pramana-f0eb7.firebaseapp.com
+        value: https://pramana-live.web.app,https://pramana-live.firebaseapp.com,https://pramana-f0eb7.web.app,https://pramana-f0eb7.firebaseapp.com
       - key: PRAMANA_ACCESS_CODE
         sync: false          # you type it in the Render dashboard; never committed
       - key: PRAMANA_SIGNING_SEED
